@@ -1,0 +1,30 @@
+# selecting low resolution properties
+USE DMONLY;
+SELECT 
+         SH.CentreOfMass_x as pos_x,
+         SH.CentreOfMass_y as pos_y,
+         SH.CentreOfMass_z as pos_z,
+         SH.Mass as mass,
+         SH.KineticEnergy as kinetic_energy,
+         SH.Vmax as Vmax,
+         SH.VmaxRadius as Vmax_radius
+FROM 
+         L0025N0752_Subhalo as SH
+WHERE
+         SH.Snapnum = 2
+
+
+# selecting high resolution properties
+
+SELECT 
+    SH.CentreOfMass_x as pos_x,
+    SH.CentreOfMass_y as pos_y,
+    SH.CentreOfMass_z as pos_z,
+    SH.MassType_Star as mstar,
+    SH.StarFormationRate as SFR,
+    SH.Mass as mass
+FROM 
+    RefL0025N0752_Subhalo as SH
+WHERE 
+    SH.Spurious = 0
+    and SH.Snapnum = 2
