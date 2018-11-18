@@ -1,7 +1,8 @@
 import numpy as np
 from astropy.table import Table
 from scipy.spatial import cKDTree as kDTree
-from sklearn.neural_network import MLPRegressor
+from keras.models import Sequential
+from keras.layers import Dense
 
 train = 0.75
 np.random.seed(162)
