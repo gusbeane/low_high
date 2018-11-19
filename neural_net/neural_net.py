@@ -1,40 +1,59 @@
 import numpy as np
-from astropy.table import Table
-from scipy.spatial import cKDTree as kDTree
-from keras.models import Sequential
-from keras.layers import Dense
+import matplotlib as mpl; mpl.use('agg')
+import matplotlib.pyplot as plt
 
-train = 0.75
-np.random.seed(162)
+from tqdm import tqdm
 
-# read in data
-lres_out = 'lowresolution_properties_xmatch.fits'
-hres_out = 'highresolution_properties_xmatch.fits'
+import torch
+import torch.nn as nn
+from torch.autograd import Variable
 
-lres_t = Table.read(lres_out)
-hres_t = Table.read(hres_out)
+class Additions(nn.Module):
+    def __init__(self):
+        super(Additions, self).__init__()
+        self.layer1 = nn.Linear(2, 1, bias=False)
 
-lres = np.transpose([lres_t['mass'], lres_t['kinetic_energy'], 
-                     lres_t['Vmax'], lres_t['Vmax_radius']])
+    def forward(self, x):
+        out = self.layer1(x)
+        return out
 
-hres = np.transpose([hres_t['mstar'], hres_t['SFR']])
+class NLAdditions(nn.Module):
+    def __init__(self):
+        super(NLAdditions, self).__init__()
+        self.layer1 = nn.Sequential(
+            nn.Linear(4,10),
+            nn.ReLU(),
+            nn.Linear(10,10),
+            nn.ReLU(),
+            nn.Linear(10,3))
 
-# choose a sample to train on and to test on
-num_to_choose = int(len(lres)*train)
-keys_train = np.random.choice(range(len(lres)), size=num_to_choose, replace=False)
-keys_test = np.array([i for i in range(len(lres)) if i not in keys_train])
+    def forward(self, x):
+        out = self.layer1(x)
+        return out
 
-lres_train = lres[keys_train]
-hres_train = hres[keys_train]
-lres_test = lres[keys_test]
-hres_test = hres[keys_test]
+if __name__ == '__main__':
+    lres = np.load('../xmatch/lres_ml.npy')    
+    hres = np.load('../xmatch/hres_ml.npy')    
 
-mstar_train = hres_train[:,0]
-mstar_test = hres_test[:,0]
+    model = NLAdditions()
 
-# run the neural network aka magic
-# clf_mstar = MLPClassifier(solver='lbfgs', alpha=1e-5,
-#                     hidden_layer_sizes=(5, 2), random_state=1)
-clf_mstar = MLPRegressor(max_iter=100000000, learning_rate_init=0.0000001)
+    optimizer = torch.optim.Adam(model.parameters())
+    criterion = nn.MSELoss()
 
-# clf_mstar.fit(lres_train.astype('f'), mstar_train.astype('f'))
+    total_loss = []
+    num_samples = 100
+
+    for l,h in tqdm(zip(lres, hres)):
+        lt = torch.tensor(l)
+        ht = torch.tensor(h)
+        input_data, target = Variable(lt).float(), Variable(ht).float()
+        
+        output = model(input_data)
+        loss = criterion(output, target)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        total_loss.append(loss)
+        print(loss)
