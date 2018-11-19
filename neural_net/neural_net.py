@@ -20,12 +20,15 @@ class Additions(nn.Module):
 class NLAdditions(nn.Module):
     def __init__(self, xlist, ylist):
         super(NLAdditions, self).__init__()
+        inlayer = np.shape(xlist)[1]
+        outlayer = np.shape(ylist)[1]
+        
         self.layer1 = nn.Sequential(
-            nn.Linear(len(xlist),10),
+            nn.Linear(inlayer,10),
             nn.ReLU(),
             nn.Linear(10,10),
             nn.ReLU(),
-            nn.Linear(10,len(ylist)))
+            nn.Linear(10,outlayer))
         
         self.xmean = np.mean(xlist, axis=0)
         self.xstd = np.std(xlist, axis=0)
